@@ -32,7 +32,7 @@ func (t *lru) gc() {
 
 func (t *lru) Put(key string, val interface{}) {
 
-	t.hq.PushFront(Key(key), val)
+	t.hq.PushFront(key, val)
 	t.gc() // try gc
 
 	return
@@ -40,8 +40,8 @@ func (t *lru) Put(key string, val interface{}) {
 
 func (t *lru) Get(key string) (val interface{}, exists bool) {
 
-	if val, exists = t.hq.Get(Key(key)); exists {
-		t.hq.MoveToFront(Key(key)) // move to front of lru
+	if val, exists = t.hq.Get(key); exists {
+		t.hq.MoveToFront(key) // move to front of lru
 	}
 
 	return

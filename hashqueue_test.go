@@ -41,14 +41,35 @@ func TestHashQueue(t *testing.T) {
 	*/
 
 	for i := 0; i < 100; i++ {
-		h.PushBack(Key(uuid.New().String()), uuid.New().String())
+		h.PushBack(uuid.New().String(), uuid.New().String())
 	}
 
 	h.Sort(func(l, r *Element) bool {
 		return l.Value.(string) < r.Value.(string)
 	})
 
-	for e := h.Front(); e != nil; e = e.Next() {
-		fmt.Printf("%v => %v\n", e.Key, e.Value)
+	var lastKey string
+	var failed bool
+
+	h.Range(func(key string, val Value) bool {
+
+		fmt.Printf("%v => %v\n", key, val)
+
+		// if key > lastKey {
+		if val.(string) > lastKey {
+
+			lastKey = val.(string)
+			return true
+		}
+
+		failed = true
+		return false
+	})
+
+	if failed {
+		fmt.Printf("FAILED\n")
+	} else {
+		fmt.Printf("PASS\n")
 	}
+
 }

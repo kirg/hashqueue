@@ -14,15 +14,17 @@ type (
 
 	// Element in the hash-queue
 	Element struct {
-		Key      Key
+		// Key is the key associated with the element
+		Key string
+		// Value is the value stored in the element
 		Value    Value
 		listElem *list.Element
 	}
 
 	// HashQueue object
 	HashQueue struct {
-		l *list.List
-		m map[Key]*Element
+		l *list.List          // /list of elements
+		m map[string]*Element // map from key to element
 	}
 )
 
@@ -40,7 +42,7 @@ func (h *HashQueue) Init() *HashQueue {
 		h.l.Init()
 	}
 
-	h.m = make(map[Key]*Element)
+	h.m = make(map[string]*Element)
 
 	return h
 }
@@ -72,7 +74,7 @@ func (h *HashQueue) Back() *Element {
 
 // Remove removes the element corresponding to the key; it returns the removed
 // element.
-func (h *HashQueue) Remove(key Key) *Element {
+func (h *HashQueue) Remove(key string) *Element {
 
 	if e, ok := h.m[key]; ok {
 
@@ -87,7 +89,7 @@ func (h *HashQueue) Remove(key Key) *Element {
 }
 
 // Swap swaps the elements corresponding to the given keys.
-func (h *HashQueue) Swap(l, r Key) {
+func (h *HashQueue) Swap(l, r string) {
 
 	// if the keys are the same, no-op
 	if l == r {
@@ -128,7 +130,7 @@ func (h *HashQueue) Swap(l, r Key) {
 
 // PushFront inserts a new element with the given key and value, at the front
 // of the queue and returns the newly added entry.
-func (h *HashQueue) PushFront(key Key, val Value) *Element {
+func (h *HashQueue) PushFront(key string, val Value) *Element {
 
 	// if an element already exists in the list against the given key,
 	// update it's value and move it to the front
@@ -156,7 +158,7 @@ func (h *HashQueue) PopFront() *Element {
 
 // PushBack inserts a new element with the given key and value, at the back
 // of the queue and returns the newly added entry.
-func (h *HashQueue) PushBack(key Key, val Value) *Element {
+func (h *HashQueue) PushBack(key string, val Value) *Element {
 
 	// if an element already exists in the list against the given key,
 	// update it's value and move it to the back
@@ -185,7 +187,7 @@ func (h *HashQueue) PopBack() *Element {
 // given key in the queue, and returns the newly added entry. If an entry already
 // exists correponding to the key, then it updates the value and moves the entry,
 // if needed.
-func (h *HashQueue) InsertBefore(key Key, val Value, mark Key) *Element {
+func (h *HashQueue) InsertBefore(key string, val Value, mark string) *Element {
 
 	// if an element already exists in the list against the given key,
 	// update it's value and move it into position
@@ -210,7 +212,7 @@ func (h *HashQueue) InsertBefore(key Key, val Value, mark Key) *Element {
 // given key in the queue, and returns the newly added entry. If an entry already
 // exists corresponding to the key, then it updates the value and moves the entry,
 // if needed.
-func (h *HashQueue) InsertAfter(key Key, val Value, mark Key) *Element {
+func (h *HashQueue) InsertAfter(key string, val Value, mark string) *Element {
 
 	// if an element already exists in the list against the given key,
 	// update it's value and move it into position
@@ -233,25 +235,25 @@ func (h *HashQueue) InsertAfter(key Key, val Value, mark Key) *Element {
 
 // MoveToFront moves the element corresponding to the given key to the front
 // of the queue.
-func (h *HashQueue) MoveToFront(key Key) {
+func (h *HashQueue) MoveToFront(key string) {
 	h.l.MoveToFront(h.m[key].listElem)
 }
 
 // MoveToBack moves the element corresponding to the given key to the back
 // of the queue.
-func (h *HashQueue) MoveToBack(key Key) {
+func (h *HashQueue) MoveToBack(key string) {
 	h.l.MoveToBack(h.m[key].listElem)
 }
 
 // MoveBefore moves the element corresponding to the given key to before the
 // mark key, in the queue.
-func (h *HashQueue) MoveBefore(key, mark Key) {
+func (h *HashQueue) MoveBefore(key, mark string) {
 	h.l.MoveBefore(h.m[key].listElem, h.m[mark].listElem)
 }
 
 // MoveAfter moves the element corresponding to the given key to after the
 // mark key, in the queue.
-func (h *HashQueue) MoveAfter(key, mark Key) {
+func (h *HashQueue) MoveAfter(key, mark string) {
 	h.l.MoveAfter(h.m[key].listElem, h.m[mark].listElem)
 }
 
@@ -259,22 +261,26 @@ func (h *HashQueue) MoveAfter(key, mark Key) {
 // of this queue.
 func (h *HashQueue) PushBackHashQueue(other *HashQueue) {
 
-	for e := other.Front(); e != nil; e = e.Next() {
-		h.PushBack(e.Key, e.Value)
-	}
+	other.Range(func(key string, val Value) bool {
+
+		h.PushBack(key, val)
+		return true
+	})
 }
 
 // PushFrontHashQueue copies all the elements from the given queue to the front
 // of this queue.
 func (h *HashQueue) PushFrontHashQueue(other *HashQueue) {
 
-	for e := other.Back(); e != nil; e = e.Prev() {
-		other.PushFront(e.Key, e.Value)
-	}
+	other.RangeReverse(func(key string, val Value) bool {
+
+		h.PushFront(key, val)
+		return true
+	})
 }
 
 // Get retrieves the value corresponding to the key
-func (h *HashQueue) Get(key Key) (val Value, ok bool) {
+func (h *HashQueue) Get(key string) (val Value, ok bool) {
 
 	if e, ok := h.m[key]; ok {
 		return e.Value, true
@@ -283,19 +289,62 @@ func (h *HashQueue) Get(key Key) (val Value, ok bool) {
 	return nil, false
 }
 
+// Load retrieves the value against the key; equivalent to 'Get'
+func (h *HashQueue) Load(key string) (val Value, ok bool) {
+	return h.Get(key)
+}
+
+// Store stores the value against the key, and inserts it at
+// the back, so the queue maintains the iteration order;
+// equivalent to 'PushBack'
+func (h *HashQueue) Store(key string, val Value) {
+	h.PushBack(key, val)
+}
+
+// LoadOrStore returns the value against the given key, if it exists;
+// else it stores and returns the given value. 'loaded' is true if
+// the value existed and false, if it did not and was stored.
+func (h *HashQueue) LoadOrStore(key string, val Value) (actual Value, loaded bool) {
+
+	if e, ok := h.m[key]; ok {
+		return e.Value, true
+	}
+
+	return h.PushBack(key, val).Value, false
+}
+
+// Range calls the function for each element in the hash-queue in order;
+// if the hash-queue was updated using 'Store'/PushBack, the iteration
+// order would correspond to the insertaion order into the hash-map.
+func (h *HashQueue) Range(do func(key string, val Value) bool) {
+
+	for e := h.Front(); e != nil && do(e.Key, e.Value); e = e.Next() {
+	}
+}
+
+// RangeReverse calls the function for each element in the hash-queue
+// in reverse order; ie, from the back to the front.
+func (h *HashQueue) RangeReverse(do func(key string, val Value) bool) {
+
+	for e := h.Back(); e != nil && do(e.Key, e.Value); e = e.Prev() {
+	}
+}
+
 // Seek seeks to the element corresponding to the key
-func (h *HashQueue) Seek(key Key) *Element {
+func (h *HashQueue) Seek(key string) *Element {
 	return h.m[key]
 }
 
 // Keys returns all the keys in order
-func (h *HashQueue) Keys() []Key {
+func (h *HashQueue) Keys() []string {
 
-	keys := make([]Key, 0, h.Len())
+	keys := make([]string, 0, h.Len())
 
-	for listElem := h.l.Front(); listElem != nil; listElem = listElem.Next() {
-		keys = append(keys, listElem.Value.(*Element).Key)
-	}
+	h.Range(func(key string, _ Value) bool {
+
+		keys = append(keys, key)
+		return true
+	})
 
 	return keys
 }
@@ -326,7 +375,7 @@ type Less func(l, r *Element) bool
 // keySorter implements sort.Interface
 type keySorter struct {
 	h    *HashQueue
-	keys []Key
+	keys []string
 	less Less
 }
 
