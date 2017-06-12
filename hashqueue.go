@@ -403,6 +403,7 @@ type keySorter struct {
 }
 
 func (h *HashQueue) sorter(less Less) sort.Interface {
+
 	return &keySorter{
 		h:    h,
 		keys: h.Keys(),
@@ -422,6 +423,7 @@ func (s *keySorter) Less(i, j int) bool {
 
 // Swap implements the sort.Interface::Swap method
 func (s *keySorter) Swap(i, j int) {
+
 	s.h.Swap(s.keys[i], s.keys[j])              // swap elements
 	s.keys[i], s.keys[j] = s.keys[j], s.keys[i] // swap keys
 }
