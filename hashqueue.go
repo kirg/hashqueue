@@ -289,6 +289,24 @@ func (h *HashQueue) Get(key string) (val Value, ok bool) {
 	return nil, false
 }
 
+// Put stores the {key, val} at the position determined by the given
+// function -- it stores it at the element immediately before the first
+// element for which 'here' returns true for.
+func (h *HashQueue) Put(key string, val Value, here func(string, Value) bool) {
+
+	keys := h.Keys()
+
+	i := sort.Search(len(keys), func(i int) bool {
+		return here(keys[i], h.m[keys[i]].Value)
+	})
+
+	if i < len(keys) {
+		h.InsertBefore(key, val, keys[i])
+	} else {
+		h.PushBack(key, val)
+	}
+}
+
 // Load retrieves the value against the key; equivalent to 'Get'
 func (h *HashQueue) Load(key string) (val Value, ok bool) {
 	return h.Get(key)
@@ -299,6 +317,11 @@ func (h *HashQueue) Load(key string) (val Value, ok bool) {
 // equivalent to 'PushBack'
 func (h *HashQueue) Store(key string, val Value) {
 	h.PushBack(key, val)
+}
+
+// Delete deletes the value stored against the key.
+func (h *HashQueue) Delete(key string) (ok bool) {
+	return h.Remove(key) != nil
 }
 
 // LoadOrStore returns the value against the given key, if it exists;

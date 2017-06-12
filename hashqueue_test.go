@@ -3,6 +3,7 @@ package hashqueue
 import (
 	"fmt"
 	"github.com/google/uuid"
+	"strings"
 	"testing"
 )
 
@@ -40,13 +41,24 @@ func TestHashQueue(t *testing.T) {
 		}
 	*/
 
-	for i := 0; i < 100; i++ {
-		h.PushBack(uuid.New().String(), uuid.New().String())
-	}
+	/*
+		for i := 0; i < 100; i++ {
+			h.PushBack(uuid.New().String(), uuid.New().String())
+		}
 
-	h.Sort(func(l, r *Element) bool {
-		return l.Value.(string) < r.Value.(string)
-	})
+		h.Sort(func(l, r *Element) bool {
+			return l.Value.(string) < r.Value.(string)
+		})
+	*/
+
+	for i := 0; i < 10000; i++ {
+
+		key, val := uuid.New().String(), uuid.New().String()
+
+		h.Put(key, val, func(k string, v Value) bool {
+			return strings.Compare(val, v.(string)) < 0
+		})
+	}
 
 	var lastKey string
 	var failed bool
